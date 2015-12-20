@@ -26,10 +26,13 @@
 
 // error definitions
 typedef int ASPLIB_ERR;
-#define ASPLIB_ERR_NO_ERROR         0x00000000
-#define ASPLIB_ERR_INVALID_INPUT    0x10000000
+#define ASPLIB_ERR_NO_ERROR                       0x00000000
+#define ASPLIB_ERR_INVALID_INPUT                  0x10000000
+#define ASPLIB_ERR_NOT_IMPLEMENTED                0x11000001
+// TAutoFactory error codes
+#define ASPLIB_ERR_UNKNOWN_FACTORY_PRODUCT        0x12000001
 
-typedef enum  ASPLIB_OPT_MODULE 
+typedef enum 
 {
   ASPLIB_OPT_MIN = -1,
   ASPLIB_OPT_NATIVE,
@@ -45,7 +48,7 @@ typedef enum  ASPLIB_OPT_MODULE
   ASPLIB_OPT_ARM_VFP,
   ASLPIB_OPT_NEON,
   ASPLIB_OPT_MAX
-};
+}ASPLIB_OPT_MODULE;
 
 typedef struct
 {
