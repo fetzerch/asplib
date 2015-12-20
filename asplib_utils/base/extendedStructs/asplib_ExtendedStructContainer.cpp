@@ -1,0 +1,137 @@
+/* Copyright (C) 2014-2015 Achim Turan, Achim.Turan@o2online.de
+ * https://github.com/AchimTuran/asplib
+ *
+ * This file is part of asplib (Achim's Signal Processing LIBrary)
+ *
+ * asplib (Achim's Signal Processing LIBrary) is free software:
+ * you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * asplib (Achim's Signal Processing LIBrary) is distributed
+ * in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with asplib (Achim's Signal Processing LIBrary).
+ * ifnot, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+#include "asplib_utils/base/extendedStructs/asplib_ExtendedStructContainer.hpp"
+#include "asplib_utils/base/extendedStructs/asplib_ExtendedStructs.hpp"
+
+
+namespace asplib
+{
+CExtendedStructContainer::CExtendedStructContainer()
+{
+  m_Data          = NULL;
+  m_StructSize    = 0;
+  m_ReservedSize  = 0;
+
+  m_StructID      = 0;
+}
+
+
+CExtendedStructContainer::~CExtendedStructContainer()
+{
+  if (m_Data)
+  {
+    delete [] m_Data;
+    m_Data = NULL;
+  }
+
+  m_StructSize = 0;
+  m_ReservedSize = 0;
+
+  m_StructID = 0;
+}
+
+
+ASPLIB_ERR CExtendedStructContainer::SaveStruct(void *Struct)
+{
+  if (!Struct)
+  {
+    if (m_ReservedSize > 0 || m_StructSize > 0)
+    {
+      m_ReservedSize = 0;
+      m_StructSize = 0;
+      m_StructID = 0;
+
+      if (m_Data)
+      {
+        delete [] m_Data;
+        m_Data = NULL;
+      }
+    }
+
+    return ASPLIB_ERR_NO_ERROR;
+  }
+
+  CExtendedStructs *extendedStruct = static_cast<CExtendedStructs*>(Struct);
+  if (extendedStruct->ID <= 0)
+  {
+    return ASPLIB_ERR_INVALID_INPUT;
+  }
+
+  m_StructID = extendedStruct->ID;
+  if (m_ReservedSize <= 0 || m_ReservedSize < extendedStruct->size + extendedStruct->byteOffset)
+  {
+    if (m_Data)
+    {
+      delete [] m_Data;
+      m_Data = NULL;
+    }
+
+    m_ReservedSize = extendedStruct->size + extendedStruct->byteOffset;
+    m_StructSize = extendedStruct->size;
+
+    // allocating new memory
+    m_Data = new uint8_t[m_ReservedSize];
+  }
+  else
+  {
+    m_StructSize = extendedStruct->size;
+  }
+
+  // only save the data and not the extended info
+  memcpy((uint8_t*)m_Data, (uint8_t*)Struct, m_ReservedSize);
+
+  return ASPLIB_ERR_NO_ERROR;
+}
+
+
+ASPLIB_ERR CExtendedStructContainer::RestoreStruct(void *Struct)
+{
+  if (!m_Data || !Struct)
+  {
+    return ASPLIB_ERR_INVALID_INPUT;
+  }
+
+  CExtendedStructs *extendedStruct = static_cast<CExtendedStructs*>(Struct);
+  if (m_StructID != extendedStruct->ID)
+  {
+    return ASPLIB_ERR_INVALID_INPUT;
+  }
+
+  if (m_StructSize != extendedStruct->size)
+  {
+    return ASPLIB_ERR_INVALID_INPUT;
+  }
+
+  // only copy data and skip the extended info
+  memcpy((uint8_t*)Struct + extendedStruct->byteOffset, m_Data + extendedStruct->byteOffset, m_StructSize);
+
+  return ASPLIB_ERR_NO_ERROR;
+}
+
+
+CExtendedStructContainer::operator void*()
+{
+  return m_Data;
+}
+}
